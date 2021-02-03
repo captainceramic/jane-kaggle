@@ -63,7 +63,8 @@ last_month = load_datafile(file_tables.loc[file_tables.month_number == rand_mont
 
 # Train the initial model on a single month.
 learning_rate = 0.075
-params = {"booster": "gbtree",
+params = {"booster": "dart",
+          "rate_drop": 0.1,
           "eta": learning_rate,
           "max_depth": 4,
           "gamma": 5.0,
@@ -123,3 +124,5 @@ plt.savefig("multi_month_results.png")
 # NOTE: This is not the best way to do this! I just want
 #       something with some value before I start looking into
 #       methods that actually work!
+
+bst.predict(this_month, ntree_limit=15)
