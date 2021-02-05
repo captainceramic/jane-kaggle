@@ -58,7 +58,7 @@ file_tables = pd.DataFrame({"month_number": date_numbers,
 # train a good XGBoost model for each month? Using the update thing?
 first_month = load_datafile(file_tables.loc[file_tables.month_number == 1].filename.values[0])
 max_month = file_tables.month_number.max()
-rand_month = file_tables.month_number.sample().values()
+rand_month = file_tables.month_number.sample().values[0]
 last_month = load_datafile(file_tables.loc[file_tables.month_number == rand_month].filename.values[0])
 
 # Train the initial model on a single month.
@@ -94,7 +94,7 @@ del(first_month)
 params["eta"] = learning_rate / 2.0
 full_results = []
 full_results.append(results)
-for month_number in range(max_month):
+for month_number in range(1, max_month+1):
     if month_number == rand_month:
         continue
 
