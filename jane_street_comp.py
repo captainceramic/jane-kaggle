@@ -18,6 +18,8 @@ import re
 
 import numpy as np
 import pandas as pd
+import matplotlib
+matplotlib.use("agg")
 import matplotlib.pyplot as plt
 
 import xgboost as xgb
@@ -39,11 +41,14 @@ def load_datafile(data_filename):
     month_data.drop(columns=["resp_1", "resp_2", "resp_3", "resp_4"],
                     inplace=True)
 
+    # TB Ideas: standardise features. try to use the binary outputs from 'features.csv'
+
     month_data["value"] = month_data.weight * month_data.resp
+    month_data["good_trade"] = month_data.resp.apply(lambda x: 1 if x>0.0 else 0) 
 
     feature_cols = ["feature_{}".format(i) for i in range(130)]
     dtrain = xgb.DMatrix(month_data[feature_cols],
-                         label=month_data.value)
+                         label=month_data.good_trade)
 
     return dtrain
 
@@ -63,15 +68,17 @@ last_month = load_datafile(file_tables.loc[file_tables.month_number == rand_mont
 
 # Train the initial model on a single month.
 learning_rate = 0.075
-params = {"booster": "dart",
-          "rate_drop": 0.1,
+
+metric = "auc"
+params = {"booster": "gbtree",
           "eta": learning_rate,
           "max_depth": 4,
           "gamma": 5.0,
           "lambda": 2.0,
           "colsample_bytree": 0.50,
           "verbosity": 2,
-          "objective": "reg:squarederror"}
+          "eval_metric": metric,
+          "objective": "binary:logistic"}
 
 results = {}
 evallist = [(first_month, "train"), (last_month, "eval")]
@@ -82,8 +89,9 @@ bst = xgb.train(params, first_month,
 
 # Plot out some history
 _, ax = plt.subplots(figsize=(16, 9))
-ax.plot(results["train"]["rmse"])
-ax.plot(results["eval"]["rmse"])
+ax.plot(results["train"][metric], label="train")
+ax.plot(results["eval"][metric], label="eval")
+plt.legend()
 plt.savefig("first_month_results.png")
 
 # How does the output look?
@@ -111,12 +119,13 @@ for month_number in range(1, max_month+1):
     full_results.append(new_results)
     
 # Plot out the full results to see if this is actually working!
-train_rmse = np.concatenate([result["train"]["rmse"] for result in full_results])
-eval_rmse = np.concatenate([result["eval"]["rmse"] for result in full_results])
+train_metric = np.concatenate([result["train"][metric] for result in full_results])
+eval_metric = np.concatenate([result["eval"][metric] for result in full_results])
 
 _, ax = plt.subplots(figsize=(16, 9))
-ax.plot(train_rmse, label="train rmse")
-ax.plot(eval_rmse, label="eval rmse")
+ax.plot(train_metric, label="train")
+ax.plot(eval_metric, label="eval")
+plt.legend()
 plt.savefig("multi_month_results.png")
 
 # Final step: now we set '1' or any trade with a positive

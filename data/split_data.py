@@ -2,7 +2,7 @@
 
 """ We have a problem - the data is too big to fit in memory!
 
-Instead we will save it out one period at a time (15 days)
+Instead we will save it out one period at a time
 
 """
 
@@ -10,7 +10,7 @@ import re
 import os.path
 
 
-SPLIT_PERIOD = 15
+SPLIT_PERIOD = 60
 INPUT_DATA = "train.csv"
 OUTPUT_PATTERN = "train_{}.csv"
 
