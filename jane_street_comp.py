@@ -44,7 +44,7 @@ def load_datafile(data_filename):
     # TB Ideas: standardise features. try to use the binary outputs from 'features.csv'
 
     month_data["value"] = month_data.weight * month_data.resp
-    month_data["good_trade"] = month_data.resp.apply(lambda x: 1 if x>0.0 else 0) 
+    month_data["good_trade"] = month_data.value.apply(lambda x: 1 if x>0.0 else 0) 
 
     feature_cols = ["feature_{}".format(i) for i in range(130)]
     dtrain = xgb.DMatrix(month_data[feature_cols],
@@ -63,19 +63,20 @@ file_tables = pd.DataFrame({"month_number": date_numbers,
 # train a good XGBoost model for each month? Using the update thing?
 first_month = load_datafile(file_tables.loc[file_tables.month_number == 1].filename.values[0])
 max_month = file_tables.month_number.max()
-rand_month = file_tables.month_number.sample().values[0]
+rand_month = file_tables.loc[file_tables.month_number != 1].month_number.sample().values[0]
 last_month = load_datafile(file_tables.loc[file_tables.month_number == rand_month].filename.values[0])
 
 # Train the initial model on a single month.
-learning_rate = 0.075
+learning_rate = 0.3
+boost_rounds = 100
 
-metric = "auc"
+metric = "logloss"
 params = {"booster": "gbtree",
           "eta": learning_rate,
-          "max_depth": 4,
-          "gamma": 5.0,
-          "lambda": 2.0,
-          "colsample_bytree": 0.50,
+          "max_depth": 6,
+          "gamma": 0.0,
+          "lambda": 0.1,
+          "colsample_bytree": 1.0,
           "verbosity": 2,
           "eval_metric": metric,
           "objective": "binary:logistic"}
@@ -83,7 +84,7 @@ params = {"booster": "gbtree",
 results = {}
 evallist = [(first_month, "train"), (last_month, "eval")]
 bst = xgb.train(params, first_month,
-                num_boost_round=20,
+                num_boost_round=boost_rounds,
                 evals_result=results,
                 evals=evallist)
 
@@ -95,6 +96,7 @@ plt.legend()
 plt.savefig("first_month_results.png")
 
 # How does the output look?
+assert False
 
 # Now, start nudging the model using later months. Plan is to
 # train one month at a time.

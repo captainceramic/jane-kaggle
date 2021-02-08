@@ -10,7 +10,7 @@ import re
 import os.path
 
 
-SPLIT_PERIOD = 60
+SPLIT_PERIOD = 15
 INPUT_DATA = "train.csv"
 OUTPUT_PATTERN = "train_{}.csv"
 
